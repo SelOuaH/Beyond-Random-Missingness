@@ -16,10 +16,15 @@ import numpy as np
 import pandas as pd
 
 
-# Retain the original Windows directory structure; only NZ -> ICMSCT26.
-BASE = Path(r"D:\PhD_2021_\Editings\Conf 2026\ICMSCT26")
-SOURCE_DIR = BASE / "training_Data"
-NEW_BASE = BASE / "experiment_selected_2018"
+# # Repository root, independent of operating system
+Path(__file__).resolve().parents[2]
+# Original HOBOS sensor CSV files
+SOURCE_DIR = BASE / "data" / "raw"
+
+# Generated preprocessing outputs
+NEW_BASE = BASE / "data" / "processed"
+
+# Complete chronological splits
 DATA_DIR = NEW_BASE / "dataMissing"
 
 # Sensor, raw filename, value column, first date, last date, sample count.
