@@ -2,95 +2,222 @@
 
 **Time-Series Imputation under Realistic Missing-Data Scenarios**
 
-Research materials for the conference study *Beyond Random Missingness: Evaluating Time-Series Imputation under Diverse Missingness Patterns in Beehive IoT Sensors* (manuscript title in the supplied version; update this line when the final proceedings title is confirmed).
+Official research repository for the conference paper:
 
-This study benchmarks six missing-data imputation methods on temperature, relative-humidity and hive-weight observations from the HOBOS/Schwartau dataset. Models developed with random missingness are evaluated without adaptation on random, periodic, block, sensor-dropout and mixed missingness, to examine generalisation under changes in missingness structure.
+**Beyond Random Missingness: Evaluating Time-Series Imputation under Diverse Missingness Patterns in Beehive IoT Sensors**
 
-> **Repository status:** Documentation scaffold. The original experimental scripts, results files, dependency lockfile and licensed source-data access instructions must be added and verified before this repository can be claimed to reproduce the paper end-to-end. No implementation is included in this scaffold.
+This study investigates the robustness and generalisation of time-series imputation methods under heterogeneous missing-data scenarios in Internet of Things (IoT) sensor streams.
 
-## Research questions
+Using real-world temperature, relative-humidity, and hive-weight observations from the HOBOS/Schwartau dataset, we benchmark six imputation methods under five missingness patterns and six missingness rates.
 
-- How does the temporal structure and rate of missingness affect imputation error?
-- How well do models developed under random missingness generalise to structured losses?
-- Do learned models systematically outperform inexpensive deterministic baselines on these sensor signals?
+The central objective is to examine whether models developed under random missingness can reliably reconstruct observations affected by structured and prolonged data losses.
 
-## Experimental design
+## Research Contributions
 
-| Element | Protocol |
+The study provides:
+
+1. **Cross-missingness benchmarking:** A controlled evaluation covering random, periodic, block, sensor-dropout, and mixed missingness.
+2. **Generalisation assessment:** Trainable models are developed exclusively under random missingness and evaluated without adaptation across five missingness patterns.
+3. **Comparative evaluation:** Six imputation techniques are assessed under a common experimental protocol using chronological data partitioning, repeated training, and missing-only evaluation.
+4. **Statistical comparison:** Friedman and Holm-corrected Wilcoxon signed-rank tests are used to examine differences in reconstruction performance.
+
+## Dataset
+
+Experiments use selected complete periods from the publicly available [HOBOS/Schwartau beehive dataset](https://www.kaggle.com/datasets/se18m502/bee-hive-metrics).
+
+Three sensor variables are considered independently:
+
+| Sensor | Observation period (2018) | Samples | Resolution |
+|---|---|---:|---|
+| Temperature | 1 July – 31 December | 4,416 | Hourly |
+| Relative humidity | 15 May – 31 December | 462 | 12-hourly |
+| Hive weight | 1 August – 31 December | 306 | 12-hourly |
+
+Each series is chronologically divided into:
+
+- Training: 70%
+- Validation: 15%
+- Testing: 15%
+
+Complete observations are retained as ground truth, and artificial missingness is introduced to evaluate reconstruction accuracy.
+
+## Experimental Protocol
+
+### Missingness Scenarios
+
+Five missingness patterns are considered:
+
+| Pattern | Description |
 |---|---|
-| Source | HOBOS/Schwartau 2018, complete selected portions |
-| Signals | Temperature, relative humidity, hive weight; independent univariate tasks |
-| Splitting | Chronological training (70%), validation (15%), test (15%) |
-| Missingness patterns | Random, periodic, block, sensor dropout, mixed |
-| Test rates | 5%, 10%, 20%, 30%, 40%, 50% (requested) |
-| Test missingness seeds | 42, 123, 2024 |
-| Train/validation masking rates | 5%, 10%, 20%, 30% random missingness |
-| Validation mask seeds | 31415, 27182, 16180 |
-| Model training seeds | 42, 123, 2024, 3407, 5678 |
-| Models | Linear interpolation, LOCF, XGBoost, BRITS, SAITS, CSDI |
-| Metrics | MAE, RMSE, sMAPE, Tolerance Accuracy (TA) |
-| Scoring | Only artificially removed test positions; originally observed values retained |
+| Random | Independently selected missing observations |
+| Periodic | Missing observations distributed at regular intervals |
+| Block | Multiple contiguous missing-data intervals |
+| Sensor dropout | A single extended consecutive data loss |
+| Mixed | Combination of approximately 40% random, 30% block, and 30% periodic missingness |
 
-For each sensor, five missingness patterns × six rates × three test-mask seeds produce 90 test cases, or **270 fixed test series** across three sensors. Five training seeds for each trainable approach generate 1,350 per-model evaluation records; deterministic baselines generate 270 each. Training seeds and missingness seeds play different roles and must not be conflated.
+The evaluation covers six nominal missingness rates:
 
-The paper notes that structured masking may result in achieved missingness rates slightly different from their nominal requested rates. Retain both rates in results metadata.
+**5%, 10%, 20%, 30%, 40%, and 50%.**
 
-## Methods
+### Training, Validation and Testing
 
-- **Linear interpolation:** Uses surrounding observations to reconstruct gaps.
-- **LOCF:** Carries the latest available observation forwards, with boundary treatment as documented in the manuscript.
-- **XGBoost:** Uses lagged readings, rolling statistics and timestamp-derived predictors.
-- **BRITS:** Bidirectional recurrent imputation.
-- **SAITS:** Self-attention-based imputation.
-- **CSDI:** Conditional score-based diffusion imputation; five generated samples are averaged for point estimates.
+| Dataset partition | Missingness patterns | Rates (%) | Purpose |
+|---|---|---|---|
+| Training | Random | 5, 10, 20, 30 | Model development |
+| Validation | Random | 5, 10, 20, 30 | Hyperparameter selection |
+| Test | Random, periodic, block, sensor dropout, mixed | 5, 10, 20, 30, 40, 50 | Final evaluation |
 
-For BRITS, SAITS and CSDI, temperature uses 336-observation windows with stride 168, while humidity and weight use 56-observation windows with stride 28. Model-specific settings must be taken from the verified experiment scripts rather than inferred from this summary.
+Three missingness seeds are used for the test benchmark: `42`, `123`, and `2024`.
 
-## Headline findings from the supplied manuscript
+Validation masks use three independent seeds: `31415`, `27182`, and `16180`.
 
-| Sensor | Linear interpolation MAE | Best learned method | Best learned MAE |
-|---|---:|---|---:|
-| Temperature | 1.168 | SAITS | 1.794 |
-| Relative humidity | 0.141 | SAITS | 1.960 |
-| Hive weight | 140.753 | SAITS | 641.824 |
+Five independent model-training seeds are used for trainable methods: `42`, `123`, `2024`, `3407`, and `5678`.
 
-Results are mean values averaged over the evaluated missingness patterns and rates. Units follow the source measurement scale. Linear interpolation produced the lowest MAE in **85/90 (94.4%)** sensor–pattern–rate conditions, with LOCF best in four and SAITS in one. These findings apply to the selected locally smooth signals and should not be generalised to all IoT time series.
+The fixed test benchmark contains:
 
-## Repository layout
+**3 sensors × 5 patterns × 6 rates × 3 missingness seeds = 270 test datasets.**
+
+Trainable methods produce 1,350 evaluation records per method, reflecting the five training seeds.
+
+Periodic masks are deterministic and consequently identical across missingness seeds at the same rate.
+
+### Compared Imputation Methods
+
+Six methods representing different methodological families are evaluated:
+
+| Method | Category |
+|---|---|
+| Linear Interpolation | Deterministic temporal interpolation |
+| LOCF | Last Observation Carried Forward |
+| XGBoost | Gradient-boosted regression |
+| BRITS | Bidirectional recurrent imputation |
+| SAITS | Self-attention-based imputation |
+| CSDI | Conditional score-based diffusion imputation |
+
+Models are tuned independently for temperature, humidity, and weight using validation Mean Absolute Error (MAE).
+
+For BRITS, SAITS, and CSDI, overlapping sequences are constructed using:
+
+- Temperature: window length 336, stride 168.
+- Humidity and weight: window length 56, stride 28.
+
+The selected configurations are retained during final cross-missingness evaluation.
+
+No hyperparameters are selected using the test benchmark.
+
+## Evaluation Metrics
+
+Performance is evaluated exclusively at artificially removed positions using:
+
+- Mean Absolute Error (MAE)
+- Root Mean Squared Error (RMSE)
+- Symmetric Mean Absolute Percentage Error (sMAPE)
+- Tolerance Accuracy (TA)
+
+Tolerance Accuracy uses sensor-specific tolerances derived exclusively from the complete training data.
+
+MAE and RMSE are the primary reconstruction-error measures. Tolerance Accuracy provides supplementary information but may exhibit saturation for some sensor variables.
+
+## Principal Results
+
+The table summarises overall performance averaged across missingness patterns, rates, and experimental repetitions where applicable.
+
+| Sensor | Method | MAE | RMSE | sMAPE (%) | TA |
+|---|---|---:|---:|---:|---:|
+| Temperature | Linear Interpolation | **1.452** | **1.898** | **10.208** | **0.895** |
+| Temperature | Best learned: XGBoost | 2.168 | 2.848 | 15.280 | 0.766 |
+| Humidity | Linear Interpolation | **0.112** | **0.168** | **0.113** | **1.000** |
+| Humidity | Best learned: SAITS | 1.923 | 2.108 | 1.954 | 0.998 |
+| Weight | Linear Interpolation | **138.693** | **172.164** | **0.211** | **1.000** |
+| Weight | Best learned: SAITS | 418.500 | 471.227 | 0.635 | 1.000 |
+
+### Key Findings
+
+Linear interpolation achieved the lowest overall MAE, RMSE, and sMAPE across all three sensors.
+
+It uniquely achieved the lowest mean MAE in **80 of 90 sensor–pattern–rate conditions (88.9%)**. LOCF achieved the lowest mean MAE in eight conditions, XGBoost in one, and one additional condition resulted in a tie between linear interpolation and LOCF.
+
+Among learned methods:
+
+- XGBoost performed best on temperature and achieved the only learned-method condition-level win, under 5% block missingness.
+- SAITS achieved the lowest overall MAE among learned methods for humidity and weight.
+- Sensor dropout generally caused greater reconstruction difficulty than random and periodic missingness.
+
+These findings indicate that increased model complexity does not necessarily improve reconstruction accuracy for locally smooth IoT sensor signals.
+
+The conclusions are specific to the examined univariate sensor streams, single deployment, and experimental protocol.
+
+## Statistical Analysis
+
+Exploratory statistical comparisons were performed using:
+
+- Friedman tests across the six imputation methods.
+- Kendall's coefficient of concordance.
+- Pairwise Wilcoxon signed-rank tests with Holm correction.
+
+The analyses identified significant performance differences between methods across the evaluated conditions.
+
+Because the comparisons are based on dependent conditions from the same dataset, statistical significance should be interpreted as within-benchmark evidence rather than proof of generalisability across independent deployments.
+
+## Repository Structure
+
+The repository is being organised as follows:
 
 ```text
-.
+Beyond-Random-Missingness/
 ├── README.md
 ├── .gitignore
-├── configs/                  # Verified experiment configuration files (to add)
-├── data/README.md            # Source-data provenance and acquisition notes
-├── docs/REPRODUCIBILITY.md   # Reproduction requirements and verification checklist
-├── results/
-│   ├── tables/               # Exported numerical results (to add)
-│   └── figures/              # Generated figures (to add)
-└── src/
-    ├── preprocessing/        # Original preprocessing scripts (to add)
-    ├── missingness/          # Original masking scripts (to add)
-    ├── imputation/           # Original imputation scripts (to add)
-    └── evaluation/           # Original evaluation scripts (to add)
+├── requirements.txt
+├── CITATION.cff
+├── configs/
+├── data/
+│   └── README.md
+├── docs/
+│   └── REPRODUCIBILITY.md
+├── src/
+│   ├── preprocessing/
+│   ├── missingness/
+│   ├── imputation/
+│   └── evaluation/
+└── results/
+    ├── tables/
+    └── figures/
 ```
 
-## Reproducing the experiments
+The structure above represents the intended organisation. Source code, configurations, results and supporting files will be added as the repository is completed.
 
-The reproducible execution commands cannot be documented faithfully until the original source scripts and software environment are available. See [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) for the required files and checks. Do not execute models using the test series for hyperparameter selection.
+## Reproducibility and Code Availability
 
-## Data provenance
+The experimental implementation, missingness-generation procedures, hyperparameter configurations and evaluation scripts are being prepared for public release.
 
-The study uses selected complete periods of the publicly available HOBOS/Schwartau dataset. The original sensor observations are not redistributed in this scaffold. See [`data/README.md`](data/README.md) for acquisition and redistribution considerations.
+The final repository will document the execution environment, dataset preparation procedure, model configurations, random seeds and commands required to reproduce the reported results.
+
+Until the original experimental scripts and dependencies are incorporated and verified, the repository should be considered a work in progress rather than a validated end-to-end reproduction package.
+
+## Data Availability
+
+The original sensor data are publicly accessible through the [Bee Hive Metrics dataset on Kaggle](https://www.kaggle.com/datasets/se18m502/bee-hive-metrics).
+
+Data acquisition and preprocessing instructions will be provided separately. Redistribution of third-party data remains subject to the original dataset's applicable terms.
 
 ## Citation
 
-Please cite the conference paper when its final bibliographic details are available. A `CITATION.cff` file should be added once the publication title, venue, year and DOI have been verified. The manuscript title shown above may differ from the repository description or the final proceedings title.
+If you use the experimental methodology or results, please cite:
+
+Haddaoui, S., Guelib, I., Toumi, S.-S., Chikhi, S., and Zouari, A. *Beyond Random Missingness: Evaluating Time-Series Imputation under Diverse Missingness Patterns in Beehive IoT Sensors.*
+
+Final proceedings details and the DOI will be added when available.
 
 ## Authors
 
-Seloua Haddaoui, Ikram Guelib, Soumya-Soundous Toumi, Salim Chikhi and Amel Zouari (as listed in the supplied manuscript).
+- Seloua Haddaoui
+- Ikram Guelib
+- Soumya-Soundous Toumi
+- Salim Chikhi
+- Amel Zouari
+
+MISC Laboratory and NTIC Faculty, University of Abdelhamid Mehri – Constantine 2, Algeria.
 
 ## Licence
 
-No licence has been selected for the code or this scaffold. The repository owner should choose and add a licence after verifying the rights for any third-party implementations and data.
+The repository licence will be specified after verification of the rights associated with the original implementation and any third-party components.
