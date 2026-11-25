@@ -16,15 +16,16 @@ import numpy as np
 import pandas as pd
 
 
-# # Repository root, independent of operating system
-Path(__file__).resolve().parents[2]
-# Original HOBOS sensor CSV files
+
+# Repository root
+BASE = Path(__file__).resolve().parents[2]
+
+# Original source data (read-only)
 SOURCE_DIR = BASE / "data" / "raw"
 
-# Generated preprocessing outputs
+# Generated data
 NEW_BASE = BASE / "data" / "processed"
-
-# Complete chronological splits
+SELECTED_DIR = NEW_BASE / "selected"
 DATA_DIR = NEW_BASE / "dataMissing"
 
 # Sensor, raw filename, value column, first date, last date, sample count.
