@@ -1,0 +1,71 @@
+
+# ==========================================
+# Python cache and compiled files
+# ==========================================
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ==========================================
+# Virtual environments
+# ==========================================
+.venv/
+venv/
+env/
+ENV/
+
+# ==========================================
+# Python packaging
+# ==========================================
+build/
+dist/
+*.egg-info/
+
+# ==========================================
+# Testing and notebook checkpoints
+# ==========================================
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# ==========================================
+# IDE and operating-system files
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Original and generated experimental data
+# ==========================================
+data/raw/
+data/processed/
+
+# ==========================================
+# Experiment-generated model artefacts
+# ==========================================
+checkpoints/
+models/
+*.ckpt
+*.pth
+*.pt
+*.h5
+*.keras
+
+# ==========================================
+# Local logs and temporary files
+# ==========================================
+logs/
+*.log
+*.tmp
+*.bak
+
+# ==========================================
+# Local environment configuration
+# ==========================================
+.env
+.env.*
+!.env.example
