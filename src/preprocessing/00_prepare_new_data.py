@@ -82,11 +82,16 @@ def main():
         for sensor, spec in SENSORS.items()
     }
 
+  
+    # Create output directories after validating source files.
+    NEW_BASE.mkdir(parents=True, exist_ok=True)
+    SELECTED_DIR.mkdir(parents=True, exist_ok=True)
+
     summary = []
     for sensor, selected in prepared.items():
         value_column = SENSORS[sensor][1]
         selected.to_csv(
-            SOURCE_DIR / f"{sensor}.csv",
+            SELECTED_DIR / f"{sensor}.csv",
             index=False,
             date_format=OUTPUT_DATE_FORMAT,
         )  # Replaces the previous selected CSV; original raw CSV untouched.
@@ -120,7 +125,7 @@ def main():
 
     pd.DataFrame(summary).to_csv(NEW_BASE / "split_summary.csv", index=False)
     print("\nDATA PREPARATION PASSED")
-    print(f"Updated selected CSVs: {SOURCE_DIR}")
+    print(f"Updated selected CSVs: {SELECTED_DIR}")
     print(f"Updated complete splits: {DATA_DIR}")
     print("Existing missingness masks and model results were not modified.")
     print("Regenerate the masks before any model evaluation.")
